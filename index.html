@@ -2,13 +2,19 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flappy Foca</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Flappy Foca Móvil</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
         }
 
         body {
@@ -19,21 +25,27 @@
             height: 100vh;
             background: linear-gradient(to bottom, #1E90FF, #00008B);
             overflow: hidden;
+            padding: 10px;
         }
 
         #game-container {
             position: relative;
-            width: 320px;
-            height: 480px;
+            width: 100%;
+            max-width: 400px;
+            height: 70vh;
+            min-height: 500px;
+            max-height: 700px;
             overflow: hidden;
-            border: 2px solid #333;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            border: 3px solid #333;
+            border-radius: 15px;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
         }
 
         #game-canvas {
             background-color: #1E90FF;
             display: block;
+            width: 100%;
+            height: 100%;
         }
 
         .screen {
@@ -46,47 +58,56 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.85);
             color: white;
             text-align: center;
-            padding: 20px;
+            padding: 25px;
+            z-index: 20;
         }
 
         h1 {
-            font-size: 36px;
+            font-size: 2.5rem;
             margin-bottom: 20px;
             color: #FFD700;
             text-shadow: 2px 2px 0 #000;
         }
 
         h2 {
-            font-size: 28px;
+            font-size: 2rem;
             margin-bottom: 20px;
             color: #FFD700;
             text-shadow: 2px 2px 0 #000;
         }
 
         p {
-            font-size: 18px;
+            font-size: 1.2rem;
             margin-bottom: 20px;
             line-height: 1.5;
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
         }
 
         button {
             background-color: #FFD700;
             color: #333;
             border: none;
-            padding: 12px 24px;
-            font-size: 18px;
+            padding: 15px 30px;
+            font-size: 1.3rem;
             font-weight: bold;
             border-radius: 50px;
             cursor: pointer;
             box-shadow: 0 4px 0 #DAA520;
             transition: all 0.1s;
-            margin-top: 10px;
+            margin-top: 15px;
+            min-width: 180px;
         }
 
-        button:hover {
+        button:hover, button:active {
             background-color: #FFEC8B;
             transform: translateY(-2px);
         }
@@ -98,29 +119,114 @@
 
         #score-display {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: 24px;
+            top: 15px;
+            left: 15px;
+            font-size: 2rem;
             font-weight: bold;
             color: white;
             text-shadow: 2px 2px 0 #000;
             z-index: 10;
         }
 
+        #tap-area {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40%;
+            background: transparent;
+            z-index: 5;
+            cursor: pointer;
+        }
+
+        .tap-hint {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
         .hidden {
             display: none;
+        }
+
+        /* Estilos para orientación horizontal */
+        @media (max-height: 500px) and (orientation: landscape) {
+            #game-container {
+                height: 90vh;
+                max-height: 300px;
+                min-height: 300px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h2 {
+                font-size: 1.7rem;
+            }
+            
+            p {
+                font-size: 1rem;
+            }
+            
+            button {
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+            
+            .instructions {
+                padding: 10px;
+                margin: 10px 0;
+            }
+        }
+
+        /* Estilos para pantallas muy pequeñas */
+        @media (max-width: 350px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h2 {
+                font-size: 1.7rem;
+            }
+            
+            p {
+                font-size: 1rem;
+            }
+            
+            button {
+                padding: 12px 24px;
+                font-size: 1.1rem;
+            }
         }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <canvas id="game-canvas" width="320" height="480"></canvas>
+        <canvas id="game-canvas"></canvas>
         <div id="score-display">0</div>
+        
+        <div id="tap-area" class="hidden">
+            <div class="tap-hint">Toca para nadar</div>
+        </div>
         
         <div id="start-screen" class="screen">
             <h1>FLAPPY FOCA</h1>
-            <p>Haz clic o presiona ESPACIO para nadar</p>
-            <p>¡Evita los corales!</p>
+            <div class="instructions">
+                <p>Toca la pantalla para hacer nadar a la foca</p>
+                <p>¡Evita los corales!</p>
+            </div>
             <button id="start-button">JUGAR</button>
         </div>
         
@@ -133,6 +239,29 @@
     </div>
 
     <script>
+        // Ajustar canvas al tamaño del contenedor
+        function resizeCanvas() {
+            const container = document.getElementById('game-container');
+            const canvas = document.getElementById('game-canvas');
+            
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            
+            // Ajustar propiedades del juego según el tamaño
+            if (canvas.width && canvas.height) {
+                seal.x = canvas.width * 0.15;
+                ground.height = canvas.height * 0.15;
+                corals.gap = canvas.height * 0.25;
+                corals.width = canvas.width * 0.12;
+                corals.speed = canvas.width * 0.005;
+                
+                // Reiniciar posición de la foca si el juego está en curso
+                if (gameRunning) {
+                    seal.y = canvas.height / 2;
+                }
+            }
+        }
+
         // Elementos del DOM
         const canvas = document.getElementById('game-canvas');
         const ctx = canvas.getContext('2d');
@@ -143,6 +272,7 @@
         const bestScore = document.getElementById('best-score');
         const startButton = document.getElementById('start-button');
         const restartButton = document.getElementById('restart-button');
+        const tapArea = document.getElementById('tap-area');
 
         // Variables del juego
         let gameRunning = false;
@@ -153,12 +283,12 @@
         // Variables de la foca
         const seal = {
             x: 50,
-            y: canvas.height / 2,
-            width: 40,
-            height: 30,
-            gravity: 0.45,
+            y: 0, // Se establecerá después
+            width: 0, // Se establecerá después
+            height: 0, // Se establecerá después
+            gravity: 0,
             velocity: 0,
-            jump: -8,
+            jump: 0,
             color: '#F5F5DC',
             draw: function() {
                 // Cuerpo de la foca
@@ -169,22 +299,22 @@
                 
                 // Cabeza de la foca
                 ctx.beginPath();
-                ctx.arc(this.x + 15, this.y, this.height/2, 0, Math.PI * 2);
+                ctx.arc(this.x + this.width/2, this.y, this.height/2, 0, Math.PI * 2);
                 ctx.fill();
                 
                 // Ojos de la foca
                 ctx.fillStyle = 'black';
                 ctx.beginPath();
-                ctx.arc(this.x + 20, this.y - 5, 3, 0, Math.PI * 2);
+                ctx.arc(this.x + this.width/2 + 5, this.y - 3, 2, 0, Math.PI * 2);
                 ctx.fill();
                 
                 // Bigotes de la foca
                 ctx.strokeStyle = 'black';
                 ctx.lineWidth = 1;
-                for (let i = -2; i <= 2; i++) {
+                for (let i = -1; i <= 1; i++) {
                     ctx.beginPath();
-                    ctx.moveTo(this.x + 22, this.y + 2);
-                    ctx.lineTo(this.x + 28, this.y + 2 + i*2);
+                    ctx.moveTo(this.x + this.width/2 + 2, this.y + 1);
+                    ctx.lineTo(this.x + this.width/2 + 8, this.y + 1 + i*2);
                     ctx.stroke();
                 }
                 
@@ -192,17 +322,17 @@
                 ctx.fillStyle = this.color;
                 // Aleta delantera izquierda
                 ctx.beginPath();
-                ctx.ellipse(this.x - 10, this.y + 5, 8, 5, Math.PI/4, 0, Math.PI * 2);
+                ctx.ellipse(this.x - 5, this.y + 3, 6, 4, Math.PI/4, 0, Math.PI * 2);
                 ctx.fill();
                 
                 // Aleta delantera derecha
                 ctx.beginPath();
-                ctx.ellipse(this.x - 10, this.y - 5, 8, 5, -Math.PI/4, 0, Math.PI * 2);
+                ctx.ellipse(this.x - 5, this.y - 3, 6, 4, -Math.PI/4, 0, Math.PI * 2);
                 ctx.fill();
                 
                 // Cola de la foca
                 ctx.beginPath();
-                ctx.ellipse(this.x - 20, this.y, 10, 5, 0, 0, Math.PI * 2);
+                ctx.ellipse(this.x - this.width/2, this.y, 8, 4, 0, 0, Math.PI * 2);
                 ctx.fill();
             },
             update: function() {
@@ -210,8 +340,8 @@
                 this.y += this.velocity;
                 
                 // Limitar la foca dentro de la pantalla
-                if (this.y <= 0) {
-                    this.y = 0;
+                if (this.y - this.height/2 <= 0) {
+                    this.y = this.height/2;
                     this.velocity = 0;
                 }
                 
@@ -223,8 +353,31 @@
             },
             swim: function() {
                 this.velocity = this.jump;
+                // Efecto visual al nadar
+                sealSwimEffect();
             }
         };
+
+        // Efecto visual cuando la foca nada
+        function sealSwimEffect() {
+            // Crear burbujas al nadar
+            for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                    if (!gameRunning) return;
+                    
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                    ctx.beginPath();
+                    ctx.arc(
+                        seal.x - seal.width/2 - 5, 
+                        seal.y + (Math.random() * 10 - 5), 
+                        2 + Math.random() * 2, 
+                        0, 
+                        Math.PI * 2
+                    );
+                    ctx.fill();
+                }, i * 50);
+            }
+        }
 
         // Variables del fondo marino
         const ground = {
@@ -236,10 +389,10 @@
                 
                 // Detalles de arena
                 ctx.fillStyle = '#D2B48C';
-                for (let i = 0; i < 10; i++) {
+                for (let i = 0; i < canvas.width / 10; i++) {
                     const x = Math.random() * canvas.width;
                     const y = canvas.height - this.height + Math.random() * 10;
-                    const size = Math.random() * 3 + 1;
+                    const size = Math.random() * 2 + 1;
                     ctx.beginPath();
                     ctx.arc(x, y, size, 0, Math.PI * 2);
                     ctx.fill();
@@ -273,11 +426,11 @@
                     ctx.fillStyle = '#FF5252';
                     for (let j = 0; j < 5; j++) {
                         const x = coral.x + j * (this.width / 4);
-                        const height = 10 + Math.sin(j) * 5;
+                        const height = 8 + Math.sin(j) * 4;
                         ctx.beginPath();
                         ctx.moveTo(x, coral.y - height);
-                        ctx.lineTo(x + 5, coral.y);
-                        ctx.lineTo(x - 5, coral.y);
+                        ctx.lineTo(x + 4, coral.y);
+                        ctx.lineTo(x - 4, coral.y);
                         ctx.closePath();
                         ctx.fill();
                     }
@@ -296,11 +449,11 @@
                     ctx.fillStyle = '#26A69A';
                     for (let j = 0; j < 5; j++) {
                         const x = coral.x + j * (this.width / 4);
-                        const height = 10 + Math.cos(j) * 5;
+                        const height = 8 + Math.cos(j) * 4;
                         ctx.beginPath();
                         ctx.moveTo(x, coral.y + this.gap);
-                        ctx.lineTo(x + 5, coral.y + this.gap + height);
-                        ctx.lineTo(x - 5, coral.y + this.gap + height);
+                        ctx.lineTo(x + 4, coral.y + this.gap + height);
+                        ctx.lineTo(x - 4, coral.y + this.gap + height);
                         ctx.closePath();
                         ctx.fill();
                     }
@@ -355,11 +508,11 @@
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
                 // Burbujas
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-                for (let i = 0; i < 5; i++) {
-                    const x = 50 + i * 60;
-                    const y = 100 + Math.sin(frames * 0.05 + i) * 10;
-                    const size = 5 + Math.sin(frames * 0.03 + i) * 2;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                for (let i = 0; i < 8; i++) {
+                    const x = (i * 50 + frames * 0.5) % (canvas.width + 100) - 50;
+                    const y = 50 + Math.sin(frames * 0.05 + i) * 20;
+                    const size = 3 + Math.sin(frames * 0.03 + i) * 1.5;
                     
                     ctx.beginPath();
                     ctx.arc(x, y, size, 0, Math.PI * 2);
@@ -368,14 +521,14 @@
                 
                 // Plantas marinas en el fondo
                 ctx.fillStyle = '#2E8B57';
-                for (let i = 0; i < 3; i++) {
-                    const x = 30 + i * 100;
-                    const height = 30 + Math.sin(frames * 0.02 + i) * 5;
+                for (let i = 0; i < 5; i++) {
+                    const x = 20 + i * (canvas.width / 4);
+                    const height = 20 + Math.sin(frames * 0.02 + i) * 8;
                     
                     ctx.beginPath();
                     ctx.moveTo(x, canvas.height - ground.height);
-                    ctx.quadraticCurveTo(x - 10, canvas.height - ground.height - height, x, canvas.height - ground.height - height);
-                    ctx.quadraticCurveTo(x + 10, canvas.height - ground.height - height, x, canvas.height - ground.height);
+                    ctx.quadraticCurveTo(x - 8, canvas.height - ground.height - height, x, canvas.height - ground.height - height);
+                    ctx.quadraticCurveTo(x + 8, canvas.height - ground.height - height, x, canvas.height - ground.height);
                     ctx.fill();
                 }
             }
@@ -389,11 +542,20 @@
             gameRunning = true;
             score = 0;
             scoreDisplay.textContent = score;
+            
+            // Ajustar propiedades de la foca según el tamaño de pantalla
+            seal.width = canvas.width * 0.1;
+            seal.height = seal.width * 0.75;
+            seal.gravity = canvas.height * 0.001;
+            seal.jump = -canvas.height * 0.02;
+            
             seal.y = canvas.height / 2;
             seal.velocity = 0;
             corals.position = [];
+            
             startScreen.classList.add('hidden');
             gameOverScreen.classList.add('hidden');
+            tapArea.classList.remove('hidden');
         }
 
         function gameOver() {
@@ -407,6 +569,7 @@
             }
             
             gameOverScreen.classList.remove('hidden');
+            tapArea.classList.add('hidden');
         }
 
         function gameLoop() {
@@ -434,20 +597,41 @@
         startButton.addEventListener('click', startGame);
         restartButton.addEventListener('click', startGame);
 
-        document.addEventListener('keydown', function(e) {
-            if (e.code === 'Space') {
-                if (!gameRunning && startScreen.classList.contains('hidden')) {
-                    startGame();
-                }
-                seal.swim();
-            }
-        });
-
-        canvas.addEventListener('click', function() {
+        // Control táctil para móviles
+        tapArea.addEventListener('touchstart', function(e) {
+            e.preventDefault();
             if (gameRunning) {
                 seal.swim();
             }
         });
+
+        // También permitir tocar en cualquier parte de la pantalla durante el juego
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            if (gameRunning) {
+                seal.swim();
+            }
+        });
+
+        // También soporte para teclado (por si acaso)
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'Space' || e.key === ' ') {
+                if (!gameRunning && startScreen.classList.contains('hidden')) {
+                    startGame();
+                } else if (gameRunning) {
+                    seal.swim();
+                }
+            }
+        });
+
+        // Ajustar tamaño al cargar y al redimensionar
+        window.addEventListener('load', function() {
+            resizeCanvas();
+            // Inicializar posición de la foca
+            seal.y = canvas.height / 2;
+        });
+        
+        window.addEventListener('resize', resizeCanvas);
 
         // Iniciar el bucle del juego
         gameLoop();
