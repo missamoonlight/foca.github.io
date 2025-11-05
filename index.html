@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Flappy Foca Móvil - Modo Fácil</title>
+    <title>Flappy Foca - Extremadamente Fácil</title>
     <style>
         * {
             margin: 0;
@@ -211,32 +211,18 @@
             }
         }
         
-        /* Selector de dificultad */
-        .difficulty-selector {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 15px 0;
-        }
-        
-        .difficulty-btn {
+        /* Indicador de modo fácil */
+        .easy-mode-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
             background-color: #4CAF50;
-            min-width: 200px;
-        }
-        
-        .difficulty-btn.easy {
-            background-color: #4CAF50;
-            box-shadow: 0 4px 0 #2E7D32;
-        }
-        
-        .difficulty-btn.normal {
-            background-color: #FF9800;
-            box-shadow: 0 4px 0 #EF6C00;
-        }
-        
-        .difficulty-btn.hard {
-            background-color: #F44336;
-            box-shadow: 0 4px 0 #C62828;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            z-index: 10;
         }
     </style>
 </head>
@@ -244,6 +230,7 @@
     <div id="game-container">
         <canvas id="game-canvas"></canvas>
         <div id="score-display">0</div>
+        <div class="easy-mode-indicator">MODO FÁCIL</div>
         
         <div id="tap-area" class="hidden">
             <div class="tap-hint">Toca para nadar</div>
@@ -254,13 +241,9 @@
             <div class="instructions">
                 <p>Toca la pantalla para hacer nadar a la foca</p>
                 <p>¡Evita los corales!</p>
+                <p style="color: #4CAF50; font-weight: bold;">MODO EXTREMADAMENTE FÁCIL ACTIVADO</p>
             </div>
-            <div class="difficulty-selector">
-                <p>Selecciona la dificultad:</p>
-                <button id="easy-button" class="difficulty-btn easy">FÁCIL</button>
-                <button id="normal-button" class="difficulty-btn normal">NORMAL</button>
-                <button id="hard-button" class="difficulty-btn hard">DIFÍCIL</button>
-            </div>
+            <button id="start-button">JUGAR</button>
         </div>
         
         <div id="game-over-screen" class="screen hidden">
@@ -285,19 +268,10 @@
                 seal.x = canvas.width * 0.15;
                 ground.height = canvas.height * 0.15;
                 
-                // Ajustar según dificultad
-                if (currentDifficulty === 'easy') {
-                    corals.gap = canvas.height * 0.35; // Más espacio entre corales
-                    corals.speed = canvas.width * 0.003; // Más lento
-                } else if (currentDifficulty === 'normal') {
-                    corals.gap = canvas.height * 0.25;
-                    corals.speed = canvas.width * 0.005;
-                } else { // hard
-                    corals.gap = canvas.height * 0.2;
-                    corals.speed = canvas.width * 0.007;
-                }
-                
-                corals.width = canvas.width * 0.12;
+                // CONFIGURACIÓN EXTREMADAMENTE FÁCIL
+                corals.gap = canvas.height * 0.45; // MUCHO más espacio entre corales
+                corals.width = canvas.width * 0.08; // Corales más delgados
+                corals.speed = canvas.width * 0.002; // MUCHO más lento
                 
                 // Reiniciar posición de la foca si el juego está en curso
                 if (gameRunning) {
@@ -314,16 +288,13 @@
         const gameOverScreen = document.getElementById('game-over-screen');
         const finalScore = document.getElementById('final-score');
         const bestScore = document.getElementById('best-score');
-        const easyButton = document.getElementById('easy-button');
-        const normalButton = document.getElementById('normal-button');
-        const hardButton = document.getElementById('hard-button');
+        const startButton = document.getElementById('start-button');
         const restartButton = document.getElementById('restart-button');
         const tapArea = document.getElementById('tap-area');
 
         // Variables del juego
         let gameRunning = false;
         let score = 0;
-        let currentDifficulty = 'normal'; // Por defecto
         let bestScoreValue = localStorage.getItem('flappyFocaBestScore') || 0;
         bestScore.textContent = bestScoreValue;
 
@@ -337,22 +308,27 @@
             velocity: 0,
             jump: 0,
             color: '#F5F5DC',
+            rotation: 0, // Para la rotación al caer
             draw: function() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                
                 // Cuerpo de la foca
                 ctx.fillStyle = this.color;
                 ctx.beginPath();
-                ctx.ellipse(this.x, this.y, this.width/2, this.height/2, 0, 0, Math.PI * 2);
+                ctx.ellipse(0, 0, this.width/2, this.height/2, 0, 0, Math.PI * 2);
                 ctx.fill();
                 
                 // Cabeza de la foca
                 ctx.beginPath();
-                ctx.arc(this.x + this.width/2, this.y, this.height/2, 0, Math.PI * 2);
+                ctx.arc(this.width/2, 0, this.height/2, 0, Math.PI * 2);
                 ctx.fill();
                 
                 // Ojos de la foca
                 ctx.fillStyle = 'black';
                 ctx.beginPath();
-                ctx.arc(this.x + this.width/2 + 5, this.y - 3, 2, 0, Math.PI * 2);
+                ctx.arc(this.width/2 + 5, -3, 2, 0, Math.PI * 2);
                 ctx.fill();
                 
                 // Bigotes de la foca
@@ -360,8 +336,8 @@
                 ctx.lineWidth = 1;
                 for (let i = -1; i <= 1; i++) {
                     ctx.beginPath();
-                    ctx.moveTo(this.x + this.width/2 + 2, this.y + 1);
-                    ctx.lineTo(this.x + this.width/2 + 8, this.y + 1 + i*2);
+                    ctx.moveTo(this.width/2 + 2, 1);
+                    ctx.lineTo(this.width/2 + 8, 1 + i*2);
                     ctx.stroke();
                 }
                 
@@ -369,22 +345,34 @@
                 ctx.fillStyle = this.color;
                 // Aleta delantera izquierda
                 ctx.beginPath();
-                ctx.ellipse(this.x - 5, this.y + 3, 6, 4, Math.PI/4, 0, Math.PI * 2);
+                ctx.ellipse(-5, 3, 6, 4, Math.PI/4, 0, Math.PI * 2);
                 ctx.fill();
                 
                 // Aleta delantera derecha
                 ctx.beginPath();
-                ctx.ellipse(this.x - 5, this.y - 3, 6, 4, -Math.PI/4, 0, Math.PI * 2);
+                ctx.ellipse(-5, -3, 6, 4, -Math.PI/4, 0, Math.PI * 2);
                 ctx.fill();
                 
                 // Cola de la foca
                 ctx.beginPath();
-                ctx.ellipse(this.x - this.width/2, this.y, 8, 4, 0, 0, Math.PI * 2);
+                ctx.ellipse(-this.width/2, 0, 8, 4, 0, 0, Math.PI * 2);
                 ctx.fill();
+                
+                ctx.restore();
             },
             update: function() {
+                // SALTO CARACTERÍSTICO DE FLAPPY BIRD
                 this.velocity += this.gravity;
                 this.y += this.velocity;
+                
+                // Rotación basada en la velocidad (como en Flappy Bird)
+                if (this.velocity < 0) {
+                    // Subiendo - rotación hacia arriba
+                    this.rotation = Math.max(-Math.PI/6, this.rotation - 0.05);
+                } else {
+                    // Cayendo - rotación hacia abajo
+                    this.rotation = Math.min(Math.PI/4, this.rotation + 0.03);
+                }
                 
                 // Limitar la foca dentro de la pantalla
                 if (this.y - this.height/2 <= 0) {
@@ -455,7 +443,6 @@
             maxYPos: 300,
             width: 50,
             speed: 2,
-            frequency: 100, // Frecuencia de aparición de corales
             draw: function() {
                 for (let i = 0; i < this.position.length; i++) {
                     const coral = this.position[i];
@@ -509,8 +496,8 @@
             },
             update: function() {
                 if (gameRunning) {
-                    // Generar nuevos corales (dependiendo de la dificultad)
-                    if (frames % this.frequency === 0) {
+                    // Generar nuevos corales (MUCHO menos frecuentes)
+                    if (frames % 150 === 0) {
                         this.position.push({
                             x: canvas.width,
                             y: Math.floor(Math.random() * (this.maxYPos - this.minYPos + 1)) + this.minYPos,
@@ -523,11 +510,12 @@
                         const coral = this.position[i];
                         coral.x -= this.speed;
                         
-                        // Detectar colisiones
+                        // Detectar colisiones (con margen de error)
+                        const collisionMargin = 5; // Margen de error para hacerlo más fácil
                         if (
-                            seal.x + seal.width/2 > coral.x && 
-                            seal.x - seal.width/2 < coral.x + this.width && 
-                            (seal.y - seal.height/2 < coral.y || seal.y + seal.height/2 > coral.y + this.gap)
+                            seal.x + seal.width/2 - collisionMargin > coral.x && 
+                            seal.x - seal.width/2 + collisionMargin < coral.x + this.width && 
+                            (seal.y - seal.height/2 + collisionMargin < coral.y || seal.y + seal.height/2 - collisionMargin > coral.y + this.gap)
                         ) {
                             gameOver();
                         }
@@ -586,34 +574,6 @@
         let frames = 0;
 
         // Funciones del juego
-        function setDifficulty(difficulty) {
-            currentDifficulty = difficulty;
-            
-            // Ajustar parámetros según dificultad
-            if (difficulty === 'easy') {
-                // Modo fácil: menos gravedad, salto más fuerte, corales más lentos y menos frecuentes
-                seal.gravity = canvas.height * 0.0007; // Menos gravedad
-                seal.jump = -canvas.height * 0.025; // Salto más fuerte
-                corals.speed = canvas.width * 0.003; // Más lento
-                corals.gap = canvas.height * 0.35; // Más espacio entre corales
-                corals.frequency = 130; // Menos corales
-            } else if (difficulty === 'normal') {
-                // Modo normal (valores originales)
-                seal.gravity = canvas.height * 0.001;
-                seal.jump = -canvas.height * 0.02;
-                corals.speed = canvas.width * 0.005;
-                corals.gap = canvas.height * 0.25;
-                corals.frequency = 100;
-            } else { // hard
-                // Modo difícil: más gravedad, salto más débil, corales más rápidos y más frecuentes
-                seal.gravity = canvas.height * 0.0013;
-                seal.jump = -canvas.height * 0.018;
-                corals.speed = canvas.width * 0.007;
-                corals.gap = canvas.height * 0.2;
-                corals.frequency = 80;
-            }
-        }
-
         function startGame() {
             gameRunning = true;
             score = 0;
@@ -623,8 +583,10 @@
             seal.width = canvas.width * 0.1;
             seal.height = seal.width * 0.75;
             
-            // Aplicar configuración de dificultad
-            setDifficulty(currentDifficulty);
+            // CONFIGURACIÓN EXTREMADAMENTE FÁCIL
+            seal.gravity = canvas.height * 0.0005; // MUCHA menos gravedad
+            seal.jump = -canvas.height * 0.03; // Salto más potente
+            seal.rotation = 0; // Reiniciar rotación
             
             seal.y = canvas.height / 2;
             seal.velocity = 0;
@@ -671,24 +633,8 @@
         }
 
         // Event listeners
-        easyButton.addEventListener('click', function() {
-            setDifficulty('easy');
-            startGame();
-        });
-        
-        normalButton.addEventListener('click', function() {
-            setDifficulty('normal');
-            startGame();
-        });
-        
-        hardButton.addEventListener('click', function() {
-            setDifficulty('hard');
-            startGame();
-        });
-        
-        restartButton.addEventListener('click', function() {
-            startGame();
-        });
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
 
         // Control táctil para móviles
         tapArea.addEventListener('touchstart', function(e) {
@@ -731,3 +677,4 @@
     </script>
 </body>
 </html>
+
