@@ -3,692 +3,634 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Flappy Foca — Modo Clásico (como Flappy Bird)</title>
+    <title>Foca Tetris · Apila focas marinas</title>
     <style>
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
             user-select: none;
             touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            background: linear-gradient(145deg, #0b2b44, #031a2c);
+            background: linear-gradient(145deg, #0a2f44, #031a2a);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Courier New', 'Press Start 2P', 'Arial', monospace;
-            overflow: hidden;
-            padding: 12px;
+            font-family: 'Segoe UI', 'Courier New', monospace;
+            margin: 0;
+            padding: 16px;
         }
 
-        #game-container {
+        .game-wrapper {
+            background: #05212e;
+            border-radius: 48px;
+            padding: 18px 12px 18px 12px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.5), inset 0 1px 3px rgba(255,255,200,0.2);
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 18px;
+            backdrop-filter: blur(2px);
+        }
+
+        /* tablero principal */
+        .board-section {
             position: relative;
-            width: 100%;
-            max-width: 460px;
-            height: 80vh;
-            max-height: 700px;
-            min-height: 500px;
-            border-radius: 28px;
-            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.4), inset 0 0 0 2px rgba(255,255,200,0.2);
-            overflow: hidden;
-            background: #4eb0e0;
         }
 
-        canvas {
+        canvas#boardCanvas {
+            background-color: #0a2f3c;
+            border-radius: 24px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
             display: block;
             width: 100%;
-            height: 100%;
+            height: auto;
             cursor: pointer;
         }
 
-        /* pantallas modales */
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 15, 25, 0.9);
-            backdrop-filter: blur(5px);
+        /* info lateral */
+        .info-panel {
+            background: #0f2f3bdd;
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            padding: 18px 15px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
+            gap: 18px;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.3);
+            min-width: 130px;
+        }
+
+        .next-box {
+            background: #05212b;
+            border-radius: 24px;
+            padding: 12px;
             text-align: center;
-            z-index: 20;
-            border-radius: 28px;
-            padding: 20px;
-            transition: 0.1s;
         }
 
-        .hidden {
-            display: none;
-        }
-
-        h1 {
-            font-size: 2.6rem;
-            color: #FFDF7E;
-            text-shadow: 4px 4px 0 #1f5a6e;
-            letter-spacing: 3px;
-            margin-bottom: 0.5rem;
-        }
-
-        .sub {
-            font-size: 1.1rem;
-            background: #020f1ab3;
-            padding: 8px 16px;
-            border-radius: 40px;
-            margin: 8px 0;
-            color: #c6ecff;
-        }
-
-        .score-panel {
-            font-size: 1.7rem;
+        .next-box p {
+            margin: 0 0 8px 0;
+            color: #ffe3aa;
             font-weight: bold;
-            margin: 12px 0;
-            background: #00000066;
-            display: inline-block;
-            padding: 8px 24px;
-            border-radius: 40px;
+            font-size: 1.1rem;
+            text-shadow: 1px 1px 0 #001e2b;
         }
 
-        button {
-            background: #f3b33d;
-            border: none;
-            font-family: monospace;
+        canvas#nextCanvas {
+            background-color: #083e4e;
+            border-radius: 16px;
+            display: block;
+            width: 100px;
+            height: 100px;
+        }
+
+        .score-box {
+            background: #011c26;
+            padding: 10px 20px;
+            border-radius: 60px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .score-box div {
+            color: #f9e0a0;
             font-weight: bold;
             font-size: 1.5rem;
-            padding: 12px 28px;
-            border-radius: 60px;
-            margin-top: 20px;
-            color: #1e3b45;
-            box-shadow: 0 6px 0 #a4511b;
-            transition: 0.05s linear;
-            cursor: pointer;
-            touch-action: manipulation;
-        }
-
-        button:active {
-            transform: translateY(3px);
-            box-shadow: 0 3px 0 #a4511b;
-        }
-
-        #current-score {
-            position: absolute;
-            top: 18px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: white;
-            text-shadow: 3px 3px 0 #00000080;
-            z-index: 12;
-            pointer-events: none;
-            font-family: monospace;
             letter-spacing: 2px;
         }
 
-        .best-badge {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: #18262fcc;
-            backdrop-filter: blur(6px);
-            padding: 6px 12px;
-            border-radius: 40px;
-            font-size: 0.9rem;
+        .score-box span {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #ffd966;
+        }
+
+        /* controles táctiles */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 20px;
+            background: #03212db3;
+            border-radius: 60px;
+            padding: 12px 18px;
+        }
+
+        .ctrl-btn {
+            background: #f5b642;
+            border: none;
+            font-size: 1.9rem;
             font-weight: bold;
-            color: #FFE0A3;
-            z-index: 12;
+            padding: 12px 20px;
+            border-radius: 56px;
+            color: #1e3b45;
+            box-shadow: 0 5px 0 #a4511b;
+            transition: 0.03s linear;
+            cursor: pointer;
+            touch-action: manipulation;
+            min-width: 70px;
+            text-align: center;
             font-family: monospace;
         }
 
-        .tap-instruction {
-            position: absolute;
-            bottom: 28px;
-            left: 0;
-            width: 100%;
+        .ctrl-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #a4511b;
+        }
+
+        .restart-btn {
+            background: #4e95b0;
+            color: white;
+            box-shadow: 0 5px 0 #2d5a6e;
+            font-size: 1.3rem;
+            padding: 10px 18px;
+        }
+
+        @media (max-width: 580px) {
+            .ctrl-btn { font-size: 1.4rem; padding: 8px 14px; min-width: 55px; }
+            .score-box span { font-size: 1.6rem; }
+            .info-panel { padding: 12px; min-width: 110px; }
+        }
+
+        @media (max-width: 480px) {
+            .container { gap: 8px; }
+            .ctrl-btn { padding: 6px 12px; font-size: 1.2rem; }
+        }
+
+        footer {
             text-align: center;
-            font-size: 1rem;
-            color: #ffffcc;
-            font-weight: bold;
-            text-shadow: 1px 1px 0 #001122;
-            animation: fadePulse 1.5s infinite;
-            pointer-events: none;
-            z-index: 12;
-        }
-
-        @keyframes fadePulse {
-            0% { opacity: 0.5; transform: translateY(0px);}
-            50% { opacity: 1; transform: translateY(-5px);}
-            100% { opacity: 0.5; transform: translateY(0px);}
-        }
-
-        /* responsive landscape */
-        @media (max-height: 550px) and (orientation: landscape) {
-            #game-container { height: 88vh; min-height: 320px; max-height: 380px; }
-            h1 { font-size: 1.8rem; }
-            .score-panel { font-size: 1.2rem; padding: 4px 16px; }
-            button { font-size: 1.2rem; padding: 6px 18px; }
-            .tap-instruction { bottom: 8px; font-size: 0.7rem;}
-            #current-score { font-size: 1.8rem; top: 6px; }
+            color: #9bb7c4;
+            margin-top: 12px;
+            font-size: 0.7rem;
         }
     </style>
 </head>
 <body>
-<div id="game-container">
-    <canvas id="gameCanvas"></canvas>
-    <div id="current-score">0</div>
-    <div class="best-badge">🏆 MEJOR: <span id="bestScoreSpan">0</span></div>
-    <div class="tap-instruction">👇 TOCA CUALQUIER LUGAR 👇</div>
-
-    <!-- pantalla de inicio -->
-    <div id="startOverlay" class="overlay">
-        <h1>🐟 FLAPPY FOCA</h1>
-        <div class="sub">⚡ JUGABILIDAD CLÁSICA ⚡</div>
-        <div class="score-panel" style="margin-top: 8px;">
-            🎯 TOQUE RÁPIDO | 🪨 EVITA CORALES
+<div class="game-wrapper">
+    <div class="container">
+        <!-- tablero principal -->
+        <div class="board-section">
+            <canvas id="boardCanvas" width="300" height="600"></canvas>
         </div>
-        <button id="startBtn">▶ JUGAR</button>
-        <div style="margin-top: 20px; font-size: 0.8rem;">✨ Igual que Flappy Bird, pero con foca ✨</div>
+
+        <!-- panel derecho -->
+        <div class="info-panel">
+            <div class="next-box">
+                <p>🐟 SIGUIENTE</p>
+                <canvas id="nextCanvas" width="120" height="120"></canvas>
+            </div>
+            <div class="score-box">
+                <div>🎣 PUNTOS</div>
+                <span id="scoreValue">0</span>
+            </div>
+            <div class="score-box">
+                <div>🏆 LÍNEAS</div>
+                <span id="linesValue">0</span>
+            </div>
+        </div>
     </div>
 
-    <!-- pantalla game over -->
-    <div id="gameOverlay" class="overlay hidden">
-        <h2>💀 GAME OVER 💀</h2>
-        <div class="score-panel">
-            🎮 PUNTOS: <span id="finalScoreVal">0</span>
-        </div>
-        <div class="score-panel" style="background: #332211aa">
-            🏅 RÉCORD: <span id="recordFinalSpan">0</span>
-        </div>
-        <button id="restartBtn">🔁 REINTENTAR</button>
-        <div style="margin-top: 14px; font-size: 0.85rem;">🔹 Toca o presiona botón 🔹</div>
+    <!-- controles táctiles -->
+    <div class="controls">
+        <button class="ctrl-btn" id="moveLeft">◀ IZQ</button>
+        <button class="ctrl-btn" id="moveRight">DER ▶</button>
+        <button class="ctrl-btn" id="rotateBtn">🔄 ROTAR</button>
+        <button class="ctrl-btn" id="hardDropBtn">⬇️ CAÍDA</button>
+        <button class="ctrl-btn restart-btn" id="restartBtn">🔁 REINICIAR</button>
     </div>
+    <footer>🐚 Toca los botones | Apila focas marinas 🦭</footer>
 </div>
 
 <script>
     (function(){
-        // ---------- ELEMENTOS ----------
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const currentScoreSpan = document.getElementById('current-score');
-        const bestSpan = document.getElementById('bestScoreSpan');
-        const startOverlay = document.getElementById('startOverlay');
-        const gameOverlay = document.getElementById('gameOverlay');
-        const finalScoreSpan = document.getElementById('finalScoreVal');
-        const recordFinalSpan = document.getElementById('recordFinalSpan');
-        const startBtn = document.getElementById('startBtn');
-        const restartBtn = document.getElementById('restartBtn');
+        // ---------- CONFIGURACIÓN TETRIS ----------
+        const COLS = 10;
+        const ROWS = 20;
+        const CELL_SIZE = 30;     // 30px -> board 300x600
+        const NEXT_SIZE = 24;     // tamaño de celda en el canvas de preview (120/5 ≈24 pero ajustamos)
 
-        // ---------- VARIABLES DE JUEGO ----------
-        let gameActive = false;      // si el juego está corriendo
+        // Obtener canvas
+        const boardCanvas = document.getElementById('boardCanvas');
+        const ctx = boardCanvas.getContext('2d');
+        const nextCanvas = document.getElementById('nextCanvas');
+        const nextCtx = nextCanvas.getContext('2d');
+        
+        // elementos UI
+        const scoreSpan = document.getElementById('scoreValue');
+        const linesSpan = document.getElementById('linesValue');
+        
+        // Dimensiones reales
+        boardCanvas.width = COLS * CELL_SIZE;
+        boardCanvas.height = ROWS * CELL_SIZE;
+        // next canvas preview: 5x5 máximo (pieza max 4x4) pero usaremos escala
+        nextCanvas.width = 120;
+        nextCanvas.height = 120;
+        
+        // ---------- PIEZAS TEMÁTICAS: FORMAS CLÁSICAS CON NOMBRES DE FOCA ----------
+        const TETROMINOS = [
+            {   // I
+                shape: [[1,1,1,1]],
+                color: '#68c5e0',
+                name: 'Foca Larga'
+            },
+            {   // O
+                shape: [[1,1],[1,1]],
+                color: '#f9d56e',
+                name: 'Foca Redonda'
+            },
+            {   // T
+                shape: [[0,1,0],[1,1,1]],
+                color: '#c084fc',
+                name: 'Foca T'
+            },
+            {   // S
+                shape: [[0,1,1],[1,1,0]],
+                color: '#6fcf97',
+                name: 'Foca S'
+            },
+            {   // Z
+                shape: [[1,1,0],[0,1,1]],
+                color: '#e67e5a',
+                name: 'Foca Z'
+            },
+            {   // L
+                shape: [[1,0,0],[1,1,1]],
+                color: '#f5ad6b',
+                name: 'Foca L'
+            },
+            {   // J
+                shape: [[0,0,1],[1,1,1]],
+                color: '#5dade2',
+                name: 'Foca J'
+            }
+        ];
+        
+        // obtener pieza aleatoria (copia profunda)
+        function getRandomPiece() {
+            const idx = Math.floor(Math.random() * TETROMINOS.length);
+            const original = TETROMINOS[idx];
+            const shapeCopy = original.shape.map(row => [...row]);
+            return {
+                shape: shapeCopy,
+                color: original.color,
+                name: original.name
+            };
+        }
+        
+        // estado del juego
+        let board = Array(ROWS).fill().map(() => Array(COLS).fill(0)); // 0 = vacío, almacenamos objeto color?
+        let activePiece = null;      // pieza actual { shape, color, x, y }
+        let nextPiece = null;
         let score = 0;
-        let bestScore = 0;
+        let linesCleared = 0;
+        let gameActive = true;
+        let fallInterval = null;      // intervalo de caída automática
+        const BASE_INTERVAL_MS = 450; // velocidad clásica
         
-        // cargar mejor puntuación
-        try {
-            const saved = localStorage.getItem('flappyFocaClassicBest');
-            if (saved && !isNaN(parseInt(saved))) bestScore = parseInt(saved);
-            bestSpan.textContent = bestScore;
-        } catch(e) { /* silencio */ }
-
-        // dimensiones dinámicas
-        let cw = 400, ch = 600;
-        
-        // ----- OBJETO FOCA (pájaro) -----
-        const seal = {
-            x: 0,           // se define en resize
-            y: 0,
-            radius: 0,      // para colisiones circulares? usaremos rectángulo pero redondeado
-            width: 0,
-            height: 0,
-            velY: 0,
-            rotation: 0,
-            // físicas estilo Flappy Bird (valores se recalcularán en resize según altura)
-            GRAVITY: 0,        // px/s^2
-            JUMP_FORCE: 0,     // px/s (negativo)
-        };
-
-        // ----- TUBOS (CORALES) -----
-        let pipes = [];
-        const PIPE_WIDTH_RATIO = 0.09;      // 9% del ancho del canvas
-        const PIPE_GAP_RATIO = 0.28;        // hueco = 28% del alto (clásico ~ 28-30%)
-        const PIPE_SPEED_RATIO = 0.32;      // velocidad: 32% del ancho por segundo (rápida como Flappy Bird)
-        const PIPE_SPAWN_INTERVAL = 1.8;     // segundos entre cada par de tubos (clásico)
-        
-        let pipeTimer = 0;                  // acumulador delta para spawn
-        let pipeSpeedPx = 0;                // px/s (calculado)
-        let pipeWidth = 0;
-        let pipeGap = 0;
-        
-        // límites del suelo y techo (colisiones)
-        let groundY = 0;    // límite inferior Y (donde está el suelo decorativo)
-        let ceilingY = 0;   // techo (0 + margen)
-        
-        // delta time
-        let lastTimestamp = 0;
-        let animFrame = null;
-        
-        // variables para efecto visual de frames (burbujas)
-        let bgFrame = 0;
-        
-        // ---------- FUNCIONES DE REDIMENSIÓN Y PARÁMETROS ----------
-        function resizeAndSetup() {
-            const container = document.getElementById('game-container');
-            const rect = container.getBoundingClientRect();
-            cw = rect.width;
-            ch = rect.height;
-            canvas.width = cw;
-            canvas.height = ch;
-            
-            // Tamaño de la foca (similar a Flappy Bird: ~ 9% del ancho, proporcionado)
-            seal.width = cw * 0.085;
-            seal.height = seal.width * 0.85;
-            seal.radius = seal.width / 2;
-            // Posición horizontal fija (un tercio del ancho, como en el original)
-            seal.x = cw * 0.25;
-            
-            // Físicas ajustadas para sensación FLAPPY BIRD (rápida y precisa)
-            // Gravedad: 1450 px/s^2 en un canvas de 600px da una caída rápida pero justa
-            seal.GRAVITY = ch * 2.35;      // ~ 2.35 veces la altura por segundo cuadrado
-            // Impulso de salto: subida instantánea de -470 px/s en altura 600px (efecto chasquido)
-            seal.JUMP_FORCE = -ch * 0.82;   // valor contundente como Flappy Bird
-            
-            // Tubos (corales)
-            pipeWidth = cw * PIPE_WIDTH_RATIO;
-            pipeGap = ch * PIPE_GAP_RATIO;
-            pipeSpeedPx = cw * PIPE_SPEED_RATIO;
-            
-            // límites: techo (borde superior, colisión a partir del centro) y suelo decorativo
-            groundY = ch - (ch * 0.09);     // suelo ~ 9% del alto (colisión letal)
-            ceilingY = 6;                   // tope superior con margen pequeño
-            
-            // si el juego no está activo, centramos visualmente a la foca
-            if (!gameActive) {
-                seal.y = ch / 2.2;
-                seal.velY = 0;
-                seal.rotation = 0;
-            } else {
-                // evitar que se salga de límites al cambiar tamaño durante juego
-                if (seal.y - seal.height/2 < ceilingY) seal.y = ceilingY + seal.height/2;
-                if (seal.y + seal.height/2 > groundY) seal.y = groundY - seal.height/2;
-            }
+        // ---------- funciones auxiliares ----------
+        function updateUI() {
+            scoreSpan.innerText = score;
+            linesSpan.innerText = linesCleared;
         }
         
-        // ---------- REINICIO COMPLETO DEL JUEGO ----------
-        function fullReset() {
-            score = 0;
-            currentScoreSpan.textContent = "0";
-            pipes = [];
-            pipeTimer = 0;
-            seal.velY = 0;
-            seal.y = ch / 2.2;
-            seal.rotation = 0;
-            gameActive = true;
-            // ocultar pantallas
-            startOverlay.classList.add('hidden');
-            gameOverlay.classList.add('hidden');
-            
-            // Asegurar parámetros actualizados
-            resizeAndSetup();
-            
-            // generar primer tubo rápidamente (para que no empiece vacío)
-            spawnPipe();
-            // ajuste extra: timer para no generar tubos seguidos
-            pipeTimer = 0.5; 
-        }
-        
-        // Generar un nuevo par de tubos (posición aleatoria del hueco)
-        function spawnPipe() {
-            if (!cw || !ch) return;
-            // márgenes de seguridad para que el hueco no toque bordes excesivamente
-            const minTop = 40;
-            const maxTop = ch - groundY - pipeGap - 35;
-            let topY = Math.floor(Math.random() * (maxTop - minTop + 1) + minTop);
-            topY = Math.min(Math.max(topY, 28), ch - pipeGap - 28);
-            
-            pipes.push({
-                x: cw,
-                topHeight: topY,
-                bottomY: topY + pipeGap,
-                width: pipeWidth,
-                passed: false
-            });
-        }
-        
-        // Actualización física y colisiones (delta seconds)
-        function updateGame(dt) {
-            if (!gameActive) return;
-            
-            // 1. Física de la foca
-            seal.velY += seal.GRAVITY * dt;
-            seal.y += seal.velY * dt;
-            
-            // Rotación según velocidad (igual que flappy)
-            if (seal.velY < 0) {
-                seal.rotation = Math.max(-Math.PI / 5.2, seal.rotation - 0.09);
-            } else {
-                seal.rotation = Math.min(Math.PI / 3.8, seal.rotation + 0.07);
-            }
-            
-            // Colisiones con techo y suelo (game over inmediato)
-            if (seal.y - seal.height/2 <= ceilingY) {
-                gameOver();
-                return;
-            }
-            if (seal.y + seal.height/2 >= groundY) {
-                gameOver();
-                return;
-            }
-            
-            // 2. Actualizar tubos (movimiento y colisiones)
-            for (let i = 0; i < pipes.length; i++) {
-                const p = pipes[i];
-                p.x -= pipeSpeedPx * dt;
-                
-                // COLISIÓN (caja de la foca vs tubos) - exacta como Flappy Bird
-                const sealLeft = seal.x - seal.width/2;
-                const sealRight = seal.x + seal.width/2;
-                const sealTop = seal.y - seal.height/2;
-                const sealBottom = seal.y + seal.height/2;
-                
-                const pipeLeft = p.x;
-                const pipeRight = p.x + p.width;
-                
-                if (sealRight > pipeLeft && sealLeft < pipeRight) {
-                    // choca con el tubo superior o inferior
-                    if (sealTop < p.topHeight || sealBottom > p.bottomY) {
-                        gameOver();
-                        return;
+        // Dibujar una pieza en el canvas (útil para board y preview)
+        function drawPiece(ctx, piece, offsetX, offsetY, cellW, cellH, isBoard = false, boardGridColors = null) {
+            const shape = piece.shape;
+            for (let r = 0; r < shape.length; r++) {
+                for (let c = 0; c < shape[0].length; c++) {
+                    if (shape[r][c]) {
+                        const x = offsetX + c * cellW;
+                        const y = offsetY + r * cellH;
+                        ctx.fillStyle = piece.color;
+                        ctx.fillRect(x, y, cellW-1, cellH-1);
+                        // dibujar detalles de focas (caritas)
+                        ctx.fillStyle = '#fff9e0';
+                        ctx.font = `${cellW * 0.55}px "Segoe UI", monospace`;
+                        ctx.fillText("🦭", x + cellW*0.2, y + cellH*0.75);
                     }
                 }
-                
-                // Puntuación (cuando la foca pasa el tubo)
-                if (!p.passed && p.x + p.width < seal.x) {
-                    p.passed = true;
-                    score++;
-                    currentScoreSpan.textContent = score;
-                    // efecto háptico sutil en móvil
-                    if (navigator.vibrate) navigator.vibrate(18);
-                }
-            }
-            
-            // eliminar tubos fuera de pantalla
-            pipes = pipes.filter(p => p.x + p.width > 0);
-            
-            // 3. Generación periódica de nuevos tubos (como Flappy Bird)
-            pipeTimer += dt;
-            if (pipeTimer >= PIPE_SPAWN_INTERVAL) {
-                pipeTimer = 0;
-                spawnPipe();
-                // a veces pequeña variación en el intervalo para evitar monotonía
-                if (Math.random() < 0.15) pipeTimer = -0.1;
             }
         }
         
-        // ---------- GAME OVER ----------
+        // dibujar tablero completo
+        function drawBoard() {
+            ctx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
+            // cuadrícula fondo + piezas fijas
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const cell = board[row][col];
+                    const x = col * CELL_SIZE;
+                    const y = row * CELL_SIZE;
+                    if (cell !== 0) {
+                        ctx.fillStyle = cell.color;
+                        ctx.fillRect(x, y, CELL_SIZE-1, CELL_SIZE-1);
+                        ctx.fillStyle = '#fff9e0';
+                        ctx.font = `${CELL_SIZE * 0.55}px monospace`;
+                        ctx.fillText("🦭", x + CELL_SIZE*0.2, y + CELL_SIZE*0.75);
+                    } else {
+                        ctx.fillStyle = '#174f5e';
+                        ctx.fillRect(x, y, CELL_SIZE-1, CELL_SIZE-1);
+                        ctx.fillStyle = '#2e6d80';
+                        ctx.fillRect(x+2, y+2, CELL_SIZE-5, CELL_SIZE-5);
+                    }
+                }
+            }
+            // dibujar pieza activa
+            if (activePiece && gameActive) {
+                const offX = activePiece.x * CELL_SIZE;
+                const offY = activePiece.y * CELL_SIZE;
+                for (let r = 0; r < activePiece.shape.length; r++) {
+                    for (let c = 0; c < activePiece.shape[0].length; c++) {
+                        if (activePiece.shape[r][c]) {
+                            const x = offX + c * CELL_SIZE;
+                            const y = offY + r * CELL_SIZE;
+                            ctx.fillStyle = activePiece.color;
+                            ctx.fillRect(x, y, CELL_SIZE-1, CELL_SIZE-1);
+                            ctx.fillStyle = '#fff2cf';
+                            ctx.font = `${CELL_SIZE * 0.55}px monospace`;
+                            ctx.fillText("🦭", x + CELL_SIZE*0.2, y + CELL_SIZE*0.75);
+                        }
+                    }
+                }
+            }
+        }
+        
+        function drawNext() {
+            nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+            nextCtx.fillStyle = '#083e4e';
+            nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+            if (nextPiece) {
+                const shape = nextPiece.shape;
+                const blockW = nextCanvas.width / 5;  // 24px aprox
+                const blockH = nextCanvas.height / 5;
+                const shapeRows = shape.length;
+                const shapeCols = shape[0].length;
+                const startX = (nextCanvas.width - (shapeCols * blockW)) / 2;
+                const startY = (nextCanvas.height - (shapeRows * blockH)) / 2;
+                for (let r=0; r<shapeRows; r++) {
+                    for (let c=0; c<shapeCols; c++) {
+                        if (shape[r][c]) {
+                            nextCtx.fillStyle = nextPiece.color;
+                            nextCtx.fillRect(startX + c*blockW, startY + r*blockH, blockW-2, blockH-2);
+                            nextCtx.fillStyle = '#ffe3aa';
+                            nextCtx.font = `${blockW * 0.6}px monospace`;
+                            nextCtx.fillText("🦭", startX + c*blockW + blockW*0.2, startY + r*blockH + blockH*0.75);
+                        }
+                    }
+                }
+            }
+        }
+        
+        // validar colisión
+        function collide(piece, newX, newY) {
+            for (let r = 0; r < piece.shape.length; r++) {
+                for (let c = 0; c < piece.shape[0].length; c++) {
+                    if (piece.shape[r][c]) {
+                        const boardX = newX + c;
+                        const boardY = newY + r;
+                        if (boardX < 0 || boardX >= COLS || boardY >= ROWS || boardY < 0) return true;
+                        if (boardY >= 0 && board[boardY][boardX] !== 0) return true;
+                    }
+                }
+            }
+            return false;
+        }
+        
+        // fijar pieza activa al tablero
+        function mergePiece() {
+            for (let r = 0; r < activePiece.shape.length; r++) {
+                for (let c = 0; c < activePiece.shape[0].length; c++) {
+                    if (activePiece.shape[r][c]) {
+                        const boardX = activePiece.x + c;
+                        const boardY = activePiece.y + r;
+                        if (boardY >= 0 && boardY < ROWS && boardX >= 0 && boardX < COLS) {
+                            board[boardY][boardX] = { color: activePiece.color, name: activePiece.name };
+                        }
+                    }
+                }
+            }
+            // eliminar líneas completas
+            clearLines();
+            // generar nueva pieza
+            spawnNewPieceFromNext();
+            drawBoard();
+            drawNext();
+            // verificar game over
+            if (checkGameOver()) {
+                gameOver();
+            }
+        }
+        
+        function clearLines() {
+            let rowsCleared = 0;
+            for (let row = ROWS-1; row >= 0; ) {
+                let full = true;
+                for (let col = 0; col < COLS; col++) {
+                    if (board[row][col] === 0) { full = false; break; }
+                }
+                if (full) {
+                    // eliminar fila
+                    for (let r = row; r > 0; r--) {
+                        board[r] = [...board[r-1]];
+                    }
+                    board[0] = Array(COLS).fill(0);
+                    rowsCleared++;
+                    // no incrementamos row, porque la fila superior baja
+                } else {
+                    row--;
+                }
+            }
+            if (rowsCleared > 0) {
+                // puntuación clásica
+                const points = [0, 40, 100, 300, 1200];
+                const addScore = points[Math.min(rowsCleared,4)];
+                score += addScore;
+                linesCleared += rowsCleared;
+                updateUI();
+            }
+        }
+        
+        function spawnNewPieceFromNext() {
+            if (!nextPiece) {
+                nextPiece = getRandomPiece();
+            }
+            // la pieza activa se convierte en la siguiente
+            activePiece = {
+                shape: nextPiece.shape.map(row => [...row]),
+                color: nextPiece.color,
+                name: nextPiece.name,
+                x: Math.floor((COLS - nextPiece.shape[0].length) / 2),
+                y: 0
+            };
+            // generar nueva siguiente pieza
+            nextPiece = getRandomPiece();
+            
+            // colisión inicial (game over)
+            if (collide(activePiece, activePiece.x, activePiece.y)) {
+                gameActive = false;
+                if (fallInterval) clearInterval(fallInterval);
+                fallInterval = null;
+                gameOver();
+            }
+            drawBoard();
+            drawNext();
+        }
+        
+        function checkGameOver() {
+            // despues de generar, si la pieza colisiona al spawn ya se maneja, pero adicionalmente al inicio del merge
+            return !gameActive;
+        }
+        
         function gameOver() {
             if (!gameActive) return;
             gameActive = false;
-            
-            // actualizar mejor puntuación
-            if (score > bestScore) {
-                bestScore = score;
-                try {
-                    localStorage.setItem('flappyFocaClassicBest', bestScore);
-                } catch(e) {}
-                bestSpan.textContent = bestScore;
+            if (fallInterval) {
+                clearInterval(fallInterval);
+                fallInterval = null;
             }
-            finalScoreSpan.textContent = score;
-            recordFinalSpan.textContent = bestScore;
-            gameOverlay.classList.remove('hidden');
-            if (navigator.vibrate) navigator.vibrate(70);
+            ctx.globalAlpha = 0.7;
+            ctx.fillStyle = '#01121acc';
+            ctx.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = '#ffeaac';
+            ctx.font = 'bold 20px monospace';
+            ctx.fillText('GAME OVER', boardCanvas.width/2-70, boardCanvas.height/2);
         }
         
-        // ---------- ACCIÓN DE VOLAR (TOQUE) ----------
-        function jump() {
+        // movimientos
+        function moveLeft() {
+            if (!gameActive || !activePiece) return;
+            if (!collide(activePiece, activePiece.x - 1, activePiece.y)) {
+                activePiece.x--;
+                drawBoard();
+            }
+        }
+        
+        function moveRight() {
+            if (!gameActive || !activePiece) return;
+            if (!collide(activePiece, activePiece.x + 1, activePiece.y)) {
+                activePiece.x++;
+                drawBoard();
+            }
+        }
+        
+        function rotatePiece() {
+            if (!gameActive || !activePiece) return;
+            // rotar matriz
+            const oldShape = activePiece.shape;
+            const rotated = oldShape[0].map((_, idx) => oldShape.map(row => row[idx]).reverse());
+            const oldX = activePiece.x;
+            const oldY = activePiece.y;
+            const testPiece = {
+                ...activePiece,
+                shape: rotated
+            };
+            if (!collide(testPiece, oldX, oldY)) {
+                activePiece.shape = rotated;
+            } else {
+                // intentar corrimiento lateral (wall kick simple)
+                for (let offset of [-1, 1, -2, 2]) {
+                    if (!collide(testPiece, oldX + offset, oldY)) {
+                        activePiece.shape = rotated;
+                        activePiece.x += offset;
+                        break;
+                    }
+                }
+            }
+            drawBoard();
+        }
+        
+        function hardDrop() {
+            if (!gameActive || !activePiece) return;
+            while (!collide(activePiece, activePiece.x, activePiece.y + 1)) {
+                activePiece.y++;
+            }
+            mergePiece();  // fijar y generar siguiente
+            drawBoard();
+            drawNext();
+        }
+        
+        // caída automática por intervalo
+        function stepFall() {
             if (!gameActive) return;
-            // Solo puede saltar si está vivo, aplicación instantánea de velocidad
-            seal.velY = seal.JUMP_FORCE;
-            // efecto de rotación inmediata hacia arriba
-            seal.rotation = -Math.PI / 7;
-            // pequeñas burbujas visuales por feedback
-            if (navigator.vibrate) navigator.vibrate(9);
-        }
-        
-        // ---------- DIBUJADO COMPLETO (estilo colorido) ----------
-        function drawBackground() {
-            // gradiente de agua
-            const grad = ctx.createLinearGradient(0, 0, 0, ch);
-            grad.addColorStop(0, '#4ea9e0');
-            grad.addColorStop(0.7, '#1970a0');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0, 0, cw, ch);
-            
-            // burbujas flotantes
-            ctx.fillStyle = 'rgba(255,250,210,0.65)';
-            for (let i = 0; i < 10; i++) {
-                const x = (i * 47 + bgFrame * 0.7) % (cw + 80) - 40;
-                const y = 45 + Math.sin(bgFrame * 0.02 + i) * 28;
-                const rad = 2 + Math.sin(bgFrame * 0.05 + i) * 1.8;
-                ctx.beginPath();
-                ctx.arc(x, y, rad, 0, Math.PI*2);
-                ctx.fill();
-            }
-            // algas decorativas (ondulantes)
-            ctx.fillStyle = '#4e9a6b';
-            for (let i = 0; i < 5; i++) {
-                const baseX = 18 + i * (cw / 5);
-                const sway = Math.sin(bgFrame * 0.03 + i) * 5;
-                ctx.beginPath();
-                ctx.moveTo(baseX, ch - (ch*0.09));
-                ctx.quadraticCurveTo(baseX - 7 + sway, ch - (ch*0.09) - 28, baseX + sway*0.5, ch - (ch*0.09) - 48);
-                ctx.quadraticCurveTo(baseX + 9 + sway, ch - (ch*0.09) - 24, baseX, ch - (ch*0.09));
-                ctx.fill();
-            }
-            // Suelo (arena/roca)
-            ctx.fillStyle = '#ddb775';
-            ctx.fillRect(0, groundY, cw, ch - groundY);
-            ctx.fillStyle = '#b5874a';
-            for (let i=0; i<12; i++) {
-                ctx.beginPath();
-                ctx.arc(Math.random()*cw, groundY + Math.random()*(ch-groundY), 2+Math.random()*3, 0, Math.PI*2);
-                ctx.fill();
+            if (!collide(activePiece, activePiece.x, activePiece.y + 1)) {
+                activePiece.y++;
+                drawBoard();
+            } else {
+                mergePiece();
+                drawBoard();
+                drawNext();
             }
         }
         
-        function drawPipes() {
-            for (let p of pipes) {
-                // Tubo superior (coral rojizo)
-                ctx.fillStyle = '#e66948';
-                ctx.fillRect(p.x, 0, p.width, p.topHeight);
-                ctx.fillStyle = '#c54528';
-                // detalles picos
-                for (let i=0; i<4; i++) {
-                    const spikeX = p.x + i * (p.width/4);
-                    ctx.beginPath();
-                    ctx.moveTo(spikeX, p.topHeight);
-                    ctx.lineTo(spikeX+6, p.topHeight-14);
-                    ctx.lineTo(spikeX-6, p.topHeight-14);
-                    ctx.fill();
-                }
-                // Tubo inferior (coral verdoso)
-                ctx.fillStyle = '#4fa86e';
-                ctx.fillRect(p.x, p.bottomY, p.width, ch - p.bottomY - (ch - groundY));
-                ctx.fillStyle = '#328a52';
-                for (let i=0; i<4; i++) {
-                    const spikeX = p.x + i * (p.width/4);
-                    ctx.beginPath();
-                    ctx.moveTo(spikeX, p.bottomY);
-                    ctx.lineTo(spikeX+6, p.bottomY+15);
-                    ctx.lineTo(spikeX-6, p.bottomY+15);
-                    ctx.fill();
+        function startGameLoop() {
+            if (fallInterval) clearInterval(fallInterval);
+            fallInterval = setInterval(() => {
+                stepFall();
+            }, BASE_INTERVAL_MS);
+        }
+        
+        // reinicio completo
+        function restartGame() {
+            // reiniciar tablero
+            for (let i = 0; i < ROWS; i++) {
+                for (let j = 0; j < COLS; j++) {
+                    board[i][j] = 0;
                 }
             }
-        }
-        
-        function drawSeal() {
-            ctx.save();
-            ctx.translate(seal.x, seal.y);
-            ctx.rotate(seal.rotation);
-            // cuerpo principal
-            ctx.fillStyle = '#f5cf9b';
-            ctx.beginPath();
-            ctx.ellipse(0, 0, seal.width/2, seal.height/2, 0, 0, Math.PI*2);
-            ctx.fill();
-            // cabeza redondeada
-            ctx.fillStyle = '#f0c68a';
-            ctx.beginPath();
-            ctx.arc(seal.width/2.3, -3, seal.height/2.5, 0, Math.PI*2);
-            ctx.fill();
-            // ojo
-            ctx.fillStyle = '#1f2e2a';
-            ctx.beginPath();
-            ctx.arc(seal.width/2.1, -7, 3.2, 0, Math.PI*2);
-            ctx.fill();
-            ctx.fillStyle = 'white';
-            ctx.beginPath();
-            ctx.arc(seal.width/2.1 - 1.2, -8.2, 1.2, 0, Math.PI*2);
-            ctx.fill();
-            // bigotes (vibrisas)
-            ctx.strokeStyle = '#3a2a1e';
-            ctx.lineWidth = 1.2;
-            for (let w=-1; w<=1; w++) {
-                ctx.beginPath();
-                ctx.moveTo(seal.width/1.9, -4);
-                ctx.lineTo(seal.width/1.9 + 9, -4 + w*2.5);
-                ctx.stroke();
-            }
-            // aletas laterales
-            ctx.fillStyle = '#e2b47a';
-            ctx.beginPath();
-            ctx.ellipse(-8, 5, 6, 3.5, -0.3, 0, Math.PI*2);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.ellipse(-8, -6, 6, 3.5, 0.3, 0, Math.PI*2);
-            ctx.fill();
-            ctx.restore();
-        }
-        
-        function drawGroundGrass() {
-            ctx.fillStyle = '#84613a';
-            for (let i=0; i<12; i++) {
-                ctx.beginPath();
-                ctx.rect(Math.random()*cw, groundY-3, 2, 5);
-                ctx.fill();
-            }
-        }
-        
-        function render() {
-            drawBackground();
-            drawPipes();
-            drawGroundGrass();
-            drawSeal();
-            // partículas extra (chispitas de agua)
-            if (gameActive && seal.velY < -50) {
-                ctx.fillStyle = '#aff0ffaa';
-                for (let s=0; s<3; s++) {
-                    ctx.beginPath();
-                    ctx.arc(seal.x - seal.width/2 + (Math.random()*10-5), seal.y + (Math.random()*12-6), 1.5, 0, Math.PI*2);
-                    ctx.fill();
-                }
-            }
-        }
-        
-        // ---------- GAME LOOP con delta time ----------
-        let previousTime = 0;
-        function gameLoop(nowMs) {
-            if (!previousTime) {
-                previousTime = nowMs;
-                requestAnimationFrame(gameLoop);
-                render();
-                bgFrame++;
-                return;
-            }
-            let delta = Math.min(0.033, (nowMs - previousTime) / 1000);
-            if (delta <= 0.001) {
-                previousTime = nowMs;
-                requestAnimationFrame(gameLoop);
-                render();
-                bgFrame++;
-                return;
-            }
-            previousTime = nowMs;
-            
-            if (gameActive) {
-                updateGame(delta);
-            }
-            
-            render();
-            bgFrame++;
-            requestAnimationFrame(gameLoop);
-        }
-        
-        // ---------- EVENTOS TÁCTILES Y RATÓN (SALTO) ----------
-        function handleJumpTouch(e) {
-            e.preventDefault();
-            // Si el juego está activo -> saltar
-            if (gameActive) {
-                jump();
-            } 
-            // Si el juego NO está activo pero estamos en pantalla game over o inicio, interpretar como reinicio rápido
-            else if (!gameActive) {
-                // si la pantalla de game over está visible -> reiniciar
-                if (!gameOverlay.classList.contains('hidden')) {
-                    fullReset();
-                }
-                // si la pantalla de inicio está visible -> también arrancar
-                else if (!startOverlay.classList.contains('hidden')) {
-                    fullReset();
-                }
-            }
-        }
-        
-        // eventos táctiles y mouse
-        function attachEvents() {
-            const gameContainer = document.getElementById('game-container');
-            canvas.addEventListener('touchstart', handleJumpTouch, { passive: false });
-            canvas.addEventListener('mousedown', handleJumpTouch);
-            // también evitar eventos de contexto en móvil
-            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-        }
-        
-        // Botones manuales
-        startBtn.addEventListener('click', () => { fullReset(); });
-        restartBtn.addEventListener('click', () => { fullReset(); });
-        
-        // Redimensionamiento responsivo
-        window.addEventListener('resize', () => {
-            resizeAndSetup();
-            if (!gameActive) {
-                // reposicionar foca
-                seal.y = ch / 2.2;
-                seal.velY = 0;
-            }
-        });
-        
-        // Inicialización total
-        function init() {
-            resizeAndSetup();
-            attachEvents();
-            // Asegurar estado inicial en pantalla de inicio
-            gameActive = false;
-            startOverlay.classList.remove('hidden');
-            gameOverlay.classList.add('hidden');
-            seal.y = ch / 2.2;
-            seal.velY = 0;
-            pipes = [];
             score = 0;
-            currentScoreSpan.textContent = "0";
-            requestAnimationFrame(gameLoop);
+            linesCleared = 0;
+            updateUI();
+            gameActive = true;
+            // generar piezas iniciales
+            nextPiece = getRandomPiece();
+            // crear pieza activa
+            activePiece = {
+                shape: nextPiece.shape.map(row => [...row]),
+                color: nextPiece.color,
+                name: nextPiece.name,
+                x: Math.floor((COLS - nextPiece.shape[0].length) / 2),
+                y: 0
+            };
+            // nueva siguiente
+            nextPiece = getRandomPiece();
+            // asegurar que no hay colisión
+            if (collide(activePiece, activePiece.x, activePiece.y)) {
+                // forzar reinicio limpio (caso raro)
+                board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+                activePiece.y = 0;
+                activePiece.x = Math.floor((COLS - activePiece.shape[0].length) / 2);
+            }
+            if (fallInterval) clearInterval(fallInterval);
+            startGameLoop();
+            drawBoard();
+            drawNext();
         }
         
+        // ---------- INICIALIZACIÓN Y EVENTOS TÁCTILES ----------
+        function init() {
+            restartGame(); // esto dibuja y setea todo
+            // eventos de botones
+            document.getElementById('moveLeft').addEventListener('click', (e) => { e.preventDefault(); moveLeft(); });
+            document.getElementById('moveRight').addEventListener('click', (e) => { e.preventDefault(); moveRight(); });
+            document.getElementById('rotateBtn').addEventListener('click', (e) => { e.preventDefault(); rotatePiece(); });
+            document.getElementById('hardDropBtn').addEventListener('click', (e) => { e.preventDefault(); hardDrop(); });
+            document.getElementById('restartBtn').addEventListener('click', (e) => { e.preventDefault(); restartGame(); });
+            
+            // también permitir deslizamiento táctil opcional? pero mantenemos botones grandes para móvil.
+            // Prevenir contexto de canvas
+            boardCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
+            nextCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
+        }
+        
+        // Llamar init
         init();
     })();
 </script>
